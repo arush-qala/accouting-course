@@ -1,3 +1,5 @@
+import React from 'react';
+
 export interface User {
   name: string;
   startedAt: number;
@@ -31,13 +33,38 @@ export interface ModuleDefinition {
   estimate: string;
 }
 
-// Practice component types
-export interface Question {
+export interface LearningConcept {
+  id: string;
+  title: string;
+  content: string;
+  takeaway?: string;
+  example?: string;
+  visual?: React.ReactNode;
+}
+
+// Updated Practice component types
+export interface PracticeQuestion {
   id: number;
-  text: string;
+  text: string; // The main question text
+  type: 'text' | 'number' | 'multiple-choice' | 'multi-input';
+  context?: React.ReactNode; // Optional content (tables, scenarios) to display before the question
+  
+  // For multiple choice
+  options?: { id: string; text: string }[];
+  
+  // For multi-input
+  inputFields?: { key: string; label: string; prefix?: string; suffix?: string }[];
+  
+  // Answers
+  correctAnswer?: string | number | (string | number)[]; // Allow single val or array of valid options
+  correctAnswers?: Record<string, string | number>; // For multi-input (key maps to input key)
+  
   hints: string[];
   solution: string;
-  correctAnswer: string;
+  
+  // UI helpers
+  inputPrefix?: string;
+  inputSuffix?: string;
 }
 
 export interface QuizQuestion {

@@ -3,9 +3,19 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronRight, ChevronLeft, BookOpen, PenTool, CheckSquare, CheckCircle2 } from 'lucide-react';
 import { PracticeMode } from '../components/PracticeMode';
 import { BalanceSheetExercise } from '../components/BalanceSheetExercise';
+import { BreakEvenCalculator } from '../components/BreakEvenCalculator';
 import { Quiz } from '../components/Quiz';
-import { AppProgress } from '../types';
+import { AppProgress, LearningConcept, PracticeQuestion, QuizQuestion } from '../types';
 import { MODULE_1_CONCEPTS, MODULE_1_QUIZ } from '../data/module1';
+import { MODULE_2_CONCEPTS, MODULE_2_PRACTICE_QUESTIONS, MODULE_2_QUIZ } from '../data/module2';
+import { MODULE_3_CONCEPTS, MODULE_3_PRACTICE_QUESTIONS, MODULE_3_QUIZ } from '../data/module3';
+import { MODULE_4_CONCEPTS, MODULE_4_PRACTICE_QUESTIONS, MODULE_4_QUIZ } from '../data/module4';
+import { MODULE_5_CONCEPTS, MODULE_5_PRACTICE_QUESTIONS, MODULE_5_QUIZ } from '../data/module5';
+import { MODULE_6_CONCEPTS, MODULE_6_PRACTICE_QUESTIONS, MODULE_6_QUIZ } from '../data/module6';
+import { MODULE_7_CONCEPTS, MODULE_7_PRACTICE_QUESTIONS, MODULE_7_QUIZ } from '../data/module7';
+import { MODULE_8_CONCEPTS, MODULE_8_PRACTICE_QUESTIONS, MODULE_8_QUIZ } from '../data/module8';
+import { MODULE_9_CONCEPTS, MODULE_9_PRACTICE_QUESTIONS, MODULE_9_QUIZ } from '../data/module9';
+import { MODULE_10_CONCEPTS, MODULE_10_PRACTICE_QUESTIONS, MODULE_10_QUIZ } from '../data/module10';
 
 interface ModulePageProps {
   progress: AppProgress;
@@ -13,14 +23,34 @@ interface ModulePageProps {
 }
 
 const MODULE_TITLES = [
-  "Understanding the Balance Sheet", "The Income Statement",
-  "Cash Flow Analysis", "Debits & Credits", "Journal Entries",
-  "Adjusting Entries", "Financial Ratios", "Inventory Methods", "Depreciation", "Advanced Topics"
+  "Accounting Basics", "Financial Statements", "Revenue Recognition",
+  "Assets & Depreciation", "Cash Flow Statements", "Liabilities & Provisions",
+  "Cost Behavior", "Customer Profitability", "Performance Measurement", "B2B Finance Practice"
 ];
 
 const MODULE_ESTIMATES = [
-  "25 mins", "20 mins", "25 mins", "30 mins", "25 mins", "20 mins", "20 mins", "30 mins", "25 mins", "30 mins"
+  "25 mins", "25 mins", "25 mins", "20 mins", "25 mins", "20 mins", "20 mins", "25 mins", "25 mins", "30 mins"
 ];
+
+// Content Map
+const MODULE_CONTENT: Record<number, {
+    concepts: LearningConcept[];
+    quiz: QuizQuestion[];
+    practice?: PracticeQuestion[];
+    customPractice?: boolean;
+    hasCalculator?: boolean;
+}> = {
+    1: { concepts: MODULE_1_CONCEPTS, quiz: MODULE_1_QUIZ, customPractice: true },
+    2: { concepts: MODULE_2_CONCEPTS, quiz: MODULE_2_QUIZ, practice: MODULE_2_PRACTICE_QUESTIONS },
+    3: { concepts: MODULE_3_CONCEPTS, quiz: MODULE_3_QUIZ, practice: MODULE_3_PRACTICE_QUESTIONS },
+    4: { concepts: MODULE_4_CONCEPTS, quiz: MODULE_4_QUIZ, practice: MODULE_4_PRACTICE_QUESTIONS },
+    5: { concepts: MODULE_5_CONCEPTS, quiz: MODULE_5_QUIZ, practice: MODULE_5_PRACTICE_QUESTIONS },
+    6: { concepts: MODULE_6_CONCEPTS, quiz: MODULE_6_QUIZ, practice: MODULE_6_PRACTICE_QUESTIONS },
+    7: { concepts: MODULE_7_CONCEPTS, quiz: MODULE_7_QUIZ, practice: MODULE_7_PRACTICE_QUESTIONS, hasCalculator: true },
+    8: { concepts: MODULE_8_CONCEPTS, quiz: MODULE_8_QUIZ, practice: MODULE_8_PRACTICE_QUESTIONS },
+    9: { concepts: MODULE_9_CONCEPTS, quiz: MODULE_9_QUIZ, practice: MODULE_9_PRACTICE_QUESTIONS },
+    10: { concepts: MODULE_10_CONCEPTS, quiz: MODULE_10_QUIZ, practice: MODULE_10_PRACTICE_QUESTIONS }
+};
 
 export const ModulePage: React.FC<ModulePageProps> = ({ progress, onUpdateProgress }) => {
   const { id } = useParams<{ id: string }>();
@@ -33,11 +63,10 @@ export const ModulePage: React.FC<ModulePageProps> = ({ progress, onUpdateProgre
   const prevId = moduleId > 1 ? moduleId - 1 : null;
   const nextId = moduleId < 10 ? moduleId + 1 : null;
   
-  // Data for current module (Fallback to generic if not module 1)
-  const isModule1 = moduleId === 1;
+  const moduleData = MODULE_CONTENT[moduleId];
   const currentProgress = progress[moduleIdStr] || { conceptsRead: [], exerciseCompleted: false, quizScore: null, completed: false };
 
-  // Logic to prevent accessing locked modules via URL
+  // Logic to prevent accessing locked modules
   const isLocked = moduleId > 1 && !progress[(moduleId - 1).toString()]?.completed;
   if (isLocked) {
      return (
@@ -48,8 +77,6 @@ export const ModulePage: React.FC<ModulePageProps> = ({ progress, onUpdateProgre
          </div>
      )
   }
-
-  // --- Completion Logic Handlers ---
 
   const handleConceptRead = (conceptId: string, isRead: boolean) => {
     let newReadList = [...currentProgress.conceptsRead];
@@ -70,14 +97,20 @@ export const ModulePage: React.FC<ModulePageProps> = ({ progress, onUpdateProgre
 
   const handleQuizComplete = (score: number) => {
     onUpdateProgress(moduleIdStr, { quizScore: score });
-    checkCompletion(currentProgress.conceptsRead, currentProgress.exerciseCompleted, score);
+    // For Module 10 (Final Assessment), require 80% instead of 70%
+    if (moduleId === 10 && score >= 80) {
+        onUpdateProgress(moduleIdStr, { completed: true });
+    } else {
+        checkCompletion(currentProgress.conceptsRead, currentProgress.exerciseCompleted, score);
+    }
   };
 
   const checkCompletion = (read: string[], exercise: boolean, quiz: number | null) => {
-    // Requirements: All concepts read, Exercise done, Quiz >= 70%
-    const conceptsTotal = isModule1 ? MODULE_1_CONCEPTS.length : 0; // Fallback for others
-    const conceptsDone = read.length >= conceptsTotal;
-    const quizPassed = quiz !== null && quiz >= 70;
+    if (!moduleData) return;
+    const conceptsDone = read.length >= moduleData.concepts.length;
+    // Module 10 requires 80%, others 70%
+    const passingScore = moduleId === 10 ? 80 : 70;
+    const quizPassed = quiz !== null && quiz >= passingScore;
 
     if (conceptsDone && exercise && quizPassed) {
        onUpdateProgress(moduleIdStr, { completed: true });
@@ -96,7 +129,6 @@ export const ModulePage: React.FC<ModulePageProps> = ({ progress, onUpdateProgre
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold text-slate-800">{moduleId}. {moduleTitle}</h1>
-              {isModule1 && <p className="text-slate-500 mt-1">The foundation of financial statements</p>}
             </div>
             <div className="flex items-center space-x-3">
                  <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium">{MODULE_ESTIMATES[moduleId-1] || "20 mins"}</span>
@@ -134,19 +166,10 @@ export const ModulePage: React.FC<ModulePageProps> = ({ progress, onUpdateProgre
       {/* Content Area */}
       <div className="min-h-[400px]">
         {activeTab === 'learn' && (
-          isModule1 ? (
+          moduleData ? (
             <div className="space-y-6">
-               <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 text-blue-900 mb-6">
-                 <h3 className="font-bold text-lg mb-2">Learning Objectives</h3>
-                 <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li>Understand the purpose of the Balance Sheet</li>
-                    <li>Master the fundamental accounting equation</li>
-                    <li>Identify key assets, liabilities, and equity accounts</li>
-                    <li>Learn how business transactions affect the balance sheet</li>
-                 </ul>
-               </div>
-
-               {MODULE_1_CONCEPTS.map((concept) => (
+               
+               {moduleData.concepts.map((concept) => (
                    <div key={concept.id} className="bg-white rounded-xl p-6 md:p-8 shadow-sm border border-slate-100 transition-shadow hover:shadow-md">
                         <div className="flex justify-between items-start mb-4">
                             <h3 className="text-xl font-bold text-slate-800">{concept.title}</h3>
@@ -220,35 +243,32 @@ export const ModulePage: React.FC<ModulePageProps> = ({ progress, onUpdateProgre
                </div>
             </div>
           ) : (
-            <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-100 text-center py-20">
-                <BookOpen size={48} className="mx-auto text-indigo-200 mb-4" />
-                <h3 className="text-xl font-bold text-slate-800 mb-2">Content Coming Soon</h3>
-                <p className="text-slate-500 max-w-md mx-auto">
-                    The learning material for this module is currently under development. Please check back later!
-                </p>
-            </div>
+             <div className="text-center py-20"><BookOpen size={48} className="mx-auto mb-4 text-slate-300"/><p>Content coming soon.</p></div>
           )
         )}
 
         {activeTab === 'practice' && (
-             isModule1 ? (
+            <div className="space-y-8">
+             {moduleData?.customPractice ? (
                  <BalanceSheetExercise onComplete={handleExerciseComplete} />
+             ) : moduleData?.practice ? (
+                 <PracticeMode questions={moduleData.practice} onComplete={handleExerciseComplete} />
              ) : (
-                 <PracticeMode moduleId={moduleIdStr} onComplete={handleExerciseComplete} />
-             )
+                 <div className="text-center py-20 text-slate-400">Practice Unavailable</div>
+             )}
+             
+             {/* Module 7 Specific Calculator */}
+             {moduleData?.hasCalculator && (
+                 <BreakEvenCalculator />
+             )}
+            </div>
         )}
 
         {activeTab === 'quiz' && (
-            isModule1 ? (
-                <Quiz questions={MODULE_1_QUIZ} onComplete={handleQuizComplete} />
+            moduleData?.quiz ? (
+                <Quiz questions={moduleData.quiz} onComplete={handleQuizComplete} />
             ) : (
-                <div className="bg-white rounded-xl p-8 shadow-sm border border-slate-100 text-center py-20">
-                    <CheckSquare size={48} className="mx-auto text-indigo-200 mb-4" />
-                    <h3 className="text-xl font-bold text-slate-800 mb-2">Quiz Unavailable</h3>
-                    <p className="text-slate-500 max-w-md mx-auto">
-                        The quiz for this module is not yet ready.
-                    </p>
-                </div>
+                <div className="text-center py-20 text-slate-400">Quiz Unavailable</div>
             )
         )}
       </div>

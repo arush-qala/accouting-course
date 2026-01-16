@@ -1,19 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './pages/Dashboard';
 import { ModulePage } from './pages/ModulePage';
+import { Glossary } from './pages/Glossary';
+import { Settings } from './pages/Settings';
 import { initializeStorage, getStoredData, saveUser, saveProgress, saveStats } from './services/storage';
 import { User, AppProgress, AppStats } from './types';
-
-// Simple placeholders for secondary routes
-const PlaceholderPage = ({ title }: { title: string }) => (
-  <div className="max-w-4xl mx-auto bg-white p-12 rounded-xl shadow-sm border border-slate-100 text-center">
-    <h1 className="text-2xl font-bold text-slate-800 mb-2">{title}</h1>
-    <p className="text-slate-500">This feature is coming soon to Finance Fluency.</p>
-  </div>
-);
 
 // Layout wrapper to handle header titles based on route
 const LayoutContent: React.FC<{ 
@@ -102,12 +96,12 @@ function App() {
             } />
             <Route path="/glossary" element={
                 <LayoutContent toggleSidebar={() => setIsSidebarOpen(true)} title="Glossary">
-                    <PlaceholderPage title="Financial Glossary" />
+                    <Glossary />
                 </LayoutContent>
             } />
             <Route path="/settings" element={
                 <LayoutContent toggleSidebar={() => setIsSidebarOpen(true)} title="Settings">
-                    <PlaceholderPage title="App Settings" />
+                    <Settings />
                 </LayoutContent>
             } />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />

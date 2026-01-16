@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
-import { GraduationCap, Lock, CheckCircle2, Circle, Edit2 } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { GraduationCap, Lock, Circle, Edit2, Book, Settings as SettingsIcon } from 'lucide-react';
 import { AppProgress, User, ModuleProgress } from '../types';
 
 interface SidebarProps {
@@ -13,6 +13,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onCloseMobile, user, progress, onUpdateUserName }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isEditingUser, setIsEditingUser] = useState(false);
   const [tempName, setTempName] = useState(user.name);
 
@@ -88,6 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onCloseMobile, user, p
               const modProgress = progress[id];
               // Module 1 is always unlocked. Others depend on previous module completion.
               const isLocked = num > 1 && !progress[(num - 1).toString()]?.completed;
+              const isActive = location.pathname === `/module/${num}`;
               
               let statusColor = "text-slate-300"; // Gray
               if (modProgress?.completed) statusColor = "text-emerald-500";
@@ -104,21 +106,43 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onCloseMobile, user, p
                         <Lock size={14} />
                      </div>
                   ) : (
-                    <NavLink 
+                    <Link 
                         to={`/module/${num}`}
                         onClick={onCloseMobile}
-                        className={({ isActive }) => `flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+                        className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors ${isActive ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
                     >
                         <div className="flex items-center space-x-3">
                             <span className="text-xs font-mono w-4 text-center opacity-70">{num}</span>
                             <span className="text-sm font-medium truncate w-32">Module {num}</span>
                         </div>
                         <Circle size={8} fill="currentColor" className={statusColor} stroke="none" />
-                    </NavLink>
+                    </Link>
                   )}
                 </div>
               );
             })}
+            
+            <div className="my-4 border-t border-slate-100 pt-4">
+               <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-2">Tools</h3>
+               
+               <Link 
+                  to="/glossary" 
+                  onClick={onCloseMobile}
+                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${location.pathname === '/glossary' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+               >
+                   <Book size={18} />
+                   <span className="text-sm font-medium">Glossary</span>
+               </Link>
+
+               <Link 
+                  to="/settings" 
+                  onClick={onCloseMobile}
+                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg transition-colors ${location.pathname === '/settings' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50'}`}
+               >
+                   <SettingsIcon size={18} />
+                   <span className="text-sm font-medium">Settings</span>
+               </Link>
+            </div>
           </div>
 
           {/* User Section */}
